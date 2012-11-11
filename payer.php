@@ -36,10 +36,10 @@ register_activation_hook( __FILE__, array("GFPayPal", "add_permissions"));
 
 class GFPayPal {
 
-    private static $path = "gravityformspaypal/paypal.php";
+    private static $path = "hip-gravityformspayer/payer.php";
     private static $url = "http://www.gravityforms.com";
-    private static $slug = "gravityformspaypal";
-    private static $version = "1.5";
+    private static $slug = "hip-gravityformspayer";
+    private static $version = "1.0";
     private static $min_gravityforms_version = "1.6.4";
     private static $production_url = "https://www.paypal.com/cgi-bin/webscr/";
     private static $sandbox_url = "https://www.sandbox.paypal.com/cgi-bin/webscr/";
@@ -54,7 +54,7 @@ class GFPayPal {
         if(basename($_SERVER['PHP_SELF']) == "plugins.php") {
 
             //loading translations
-            load_plugin_textdomain('gravityformspaypal', FALSE, '/gravityformspaypal/languages' );
+            load_plugin_textdomain('gravityformspayer', FALSE, '/hip-gravityformspayer/languages' );
 
             add_action('after_plugin_row_' . self::$path, array('GFPayPal', 'plugin_row') );
 
