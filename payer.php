@@ -3,7 +3,7 @@
 Plugin Name: Gravity Forms Payer Add-On
 Plugin URI: http://www.gravityforms.com
 Description: Integrates Gravity Forms with Payer, enabling end users to purchase goods and services through Gravity Forms.
-Version: 1.5
+Version: 1.0
 Author: christianbolstad
 Author URI: http://www.hippies.se
 
