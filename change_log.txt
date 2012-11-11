@@ -1,3 +1,11 @@
+
+------------------------------------------------------------
+Version 1.0
+    - Ported from Paypal to Payer 
+
+
+Changelog from Paypal plugin: 
+
 ------------------------------------------------------------
 Version 1.5
     - Added support for negative line items.
