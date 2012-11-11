@@ -11,7 +11,7 @@ Author URI: http://www.hippies.se
 Copyright 2012, 2009 Christian Bolstad, rocketgenius
 last updated: November 11, 2012
 
-Based on Gravity Forms Paypal Add-On rocketgenius
+Based on Gravity Forms Paypal Add-On by rocketgenius
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
