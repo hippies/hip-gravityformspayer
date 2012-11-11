@@ -67,7 +67,7 @@ class GFPayPal {
 
         if(is_admin()){
             //loading translations
-            load_plugin_textdomain('gravityformspaypal', FALSE, '/gravityformspaypal/languages' );
+            load_plugin_textdomain('gravityformspayer', FALSE, '/hip-gravityformspayer/languages' );
 
             //automatic upgrade hooks
             add_filter("transient_update_plugins", array('GFPayPal', 'check_update'));
