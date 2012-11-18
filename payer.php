@@ -1056,6 +1056,9 @@ class GFPayPal {
             $config["meta"]["style"] = rgpost("gf_paypal_page_style");
             $config["meta"]["continue_text"] = rgpost("gf_paypal_continue_text");
             $config["meta"]["cancel_url"] = rgpost("gf_paypal_cancel_url");
+
+            $config["meta"]["payer_API_key"] = rgpost("payer_API_key");
+
             $config["meta"]["disable_note"] = rgpost("gf_paypal_disable_note");
             $config["meta"]["disable_shipping"] = rgpost('gf_paypal_disable_shipping');
             $config["meta"]["delay_autoresponder"] = rgpost('gf_paypal_delay_autoresponder');
@@ -1282,7 +1285,19 @@ class GFPayPal {
                     <label class="left_header" for="gf_paypal_cancel_url"><?php _e("Cancel URL", "gravityformspaypal"); ?> <?php gform_tooltip("paypal_cancel_url") ?></label>
                     <input type="text" name="gf_paypal_cancel_url" id="gf_paypal_cancel_url" class="width-1" value="<?php echo rgars($config, "meta/cancel_url") ?>"/>
                 </div>
+                <div class="margin_vertical_10">
+                    <label class="left_header" for="payer_API_key"><?php _e("payer_API_key", "gravityformspaypal"); ?> <?php gform_tooltip("payer_API_key") ?></label>
+                    <input type="text" name="payer_API_key" id="payer_API_key" class="width-1" value="<?php echo rgars($config, "meta/cancel_url") ?>"/>
+                </div>
+<!--
 
+payer_API_key
+
+gf_paypal_cancel_url
+
+meta/cancel_url
+
+-->
                 <div class="margin_vertical_10">
                     <label class="left_header"><?php _e("Options", "gravityformspaypal"); ?> <?php gform_tooltip("paypal_options") ?></label>
 
@@ -1719,6 +1734,32 @@ class GFPayPal {
         gform_update_meta($entry["id"], "payment_gateway", "paypal");
     }
 
+
+
+
+      private static function customer_query_data($config, $lead){
+
+        $dataz = array();
+
+        foreach(self::get_customer_fields() as $field){
+            $field_id = $config["meta"]["customer_fields"][$field["name"]];
+            $value = rgar($lead,$field_id);
+
+            if($field["name"] == "country")
+                $value = GFCommon::get_country_code($value);
+            else if($field["name"] == "state")
+                $value = GFCommon::get_us_state_code($value);
+
+            if(!empty($value))
+#                $fields .="&{$field["name"]}=" . urlencode($value);
+                $dataz[$field["name"]] = $value; 
+        }
+
+        return $dataz;
+    }
+
+
+
     public static function send_to_paypal($confirmation, $form, $entry, $ajax){
 
         // ignore requests that are not the current form's submissions
@@ -1756,6 +1797,9 @@ class GFPayPal {
 
         //Customer fields
         $customer_fields = self::customer_query_string($config, $entry);
+
+        $customer_dataz = self::customer_query_data($config, $entry);
+
 
         //Page style
         $page_style = !empty($config["meta"]["style"]) ? "&page_style=" . urlencode($config["meta"]["style"]) : "";
@@ -1799,12 +1843,14 @@ class GFPayPal {
 
         $query_string = apply_filters("gform_paypal_query_{$form['id']}", apply_filters("gform_paypal_query", $query_string, $form, $entry), $form, $entry);
 
+        print_r($customer_dataz);
+
+        $summa = self::get_donation_sum($form, $entry);
+
         print $query_string;
         
         print $url;
 
-
-        
 
 
 
@@ -1832,7 +1878,6 @@ if (!class_exists('payread_post_api')) require_once("payread_post_api.php"); //L
     echo "Success_url $Success_url<br>";
 
 
-    die;
 
 #   'callbackurl' => home_url(),
 #               // Accept URL only works without problem if you check the box "Skip step 3 Payment approved" under ->Integration ->FlexWin in your DIBS account.
@@ -1846,15 +1891,15 @@ if (!class_exists('payread_post_api')) require_once("payread_post_api.php"); //L
     $thePayreadApi->set_success_redirect_url($Success_url);
     $thePayreadApi->set_authorize_notification_url($Auth_url);
     $thePayreadApi->set_settle_notification_url($Settle_url);
-    $thePayreadApi->set_redirect_back_to_shop_url($Shop_url);
+    $thePayreadApi->set_redirect_back_to_shop_url(home_url());
 
     //Adds purchasing information
-    $thePayreadApi->add_buyer_info($order->billing_first_name,
-                                   $order->billing_last_name ,
-                                   $order->billing_address_1 ,
-                                   $order->billing_address_2, 
-                                   $order->billing_postcode,
-                                   $order->billing_city,
+    $thePayreadApi->add_buyer_info($customer_dataz['first_name'],
+                                   $customer_dataz['last_name'] ,
+                                   $customer_dataz['address1'] ,
+                                   $customer_dataz['address2'] ,
+                                   $customer_dataz['zip'],
+                                   $customer_dataz['city'] ,
                                    null,
                                    null,
                                    null,
@@ -1864,8 +1909,8 @@ if (!class_exists('payread_post_api')) require_once("payread_post_api.php"); //L
     //Loops through all the goods/services and info lines.
 
             $thePayreadApi->add_freeform_purchase(1,
-                                                  'Material fairtrade.se',
-                                                  $order->order_total,
+                                                  'Donation fairtrade.se',
+                                                  $summa,
                                                   0,
                                                   1);
 
@@ -1875,7 +1920,7 @@ if (!class_exists('payread_post_api')) require_once("payread_post_api.php"); //L
     $thePayreadApi->add_payment_method('auto');
 
     //Adds description.
-    $thePayreadApi->set_description('Order nummer #' . $order_id);
+    $thePayreadApi->set_description('Order nummer #' . $orderId);
 
     //Determines the language in payment box sv swedish, en english, fi finish, no norwegian och dk denmark
     $thePayreadApi->set_language('sv');
@@ -1883,22 +1928,21 @@ if (!class_exists('payread_post_api')) require_once("payread_post_api.php"); //L
     //Determines the currency, ie. SEK, EUR, GBR, USD, NOK, CAD (Canadian Dollar) or DKK.
     $thePayreadApi->set_currency('SEK');
 
-
     //Setting test mode
     //Use "silent"(standard), "brief" or "verbose".
     //Use the brief or verbose in case something goes wrong and you want more description of the error.
-#    $thePayreadApi->set_debug_mode('verbose');
+    $thePayreadApi->set_debug_mode('verbose');
 
-    $thePayreadApi->set_debug_mode('silent');
+#    $thePayreadApi->set_debug_mode('silent');
     
     //**********************************************************************************************
     //IMPORTANT! Testmode will NOT work with the bank-payment. You have to test with a real payment.
     //If testmode is set to false, your account WILL be charged!
     //**********************************************************************************************
 
-#   $thePayreadApi->set_test_mode(true);
+   $thePayreadApi->set_test_mode(true);
 
-   $thePayreadApi->set_test_mode(false);
+#   $thePayreadApi->set_test_mode(false);
 
    return  '
         <script type="text/javascript">
@@ -1906,13 +1950,12 @@ if (!class_exists('payread_post_api')) require_once("payread_post_api.php"); //L
             var frm = document.getElementById("order_form");
             frm.submit();
             }
-            window.onload = sendform;
+//            window.onload = sendform;
         </script>
         <form id="order_form" name="order_form" action="' .  $thePayreadApi->get_server_url() . '" method="post">
             ' . $thePayreadApi->return_generate_form() .  ' 
             <input type="submit" value="Click here to pay" />
         </form>
-        <!-- Remove debug(start) 
         <br />
         <br />
         <br />
@@ -1921,7 +1964,7 @@ if (!class_exists('payread_post_api')) require_once("payread_post_api.php"); //L
              ' .  htmlentities(base64_decode($thePayreadApi->get_xml_data())) .  '
                <br />
             --END DEBUG--
-        </pre>-->';
+        </pre>';
 
 
 
@@ -2586,6 +2629,63 @@ die;
 
         return $total > 0 ? $fields : false;
     }
+
+
+
+    private static function get_donation_sum($form, $entry){
+        $fields = "";
+
+        //getting all donation fields
+        $donations = GFCommon::get_fields_by_type($form, array("donation"));
+        $total = 0;
+        $purpose = "";
+        foreach($donations as $donation){
+            $value = RGFormsModel::get_lead_field_value($entry, $donation);
+            list($name, $price) = explode("|", $value);
+            if(empty($price)){
+                $price = $name;
+                $name = $donation["label"];
+            }
+            $purpose .= $name . ", ";
+            $price = GFCommon::to_number($price);
+            $total += $price;
+        }
+
+        //using product fields for donation if there aren't any legacy donation fields in the form
+        if($total == 0){
+            //getting all product fields
+            $products = GFCommon::get_product_fields($form, $entry, true);
+            foreach($products["products"] as $product){
+                $options = "";
+                if(is_array($product["options"]) && !empty($product["options"])){
+                    $options = " (";
+                    foreach($product["options"] as $option){
+                        $options .= $option["option_name"] . ", ";
+                    }
+                    $options = substr($options, 0, strlen($options)-2) . ")";
+                }
+                $quantity = GFCommon::to_number($product["quantity"]);
+                $quantity_label = $quantity > 1 ? $quantity . " " : "";
+                $purpose .= $quantity_label . $product["name"] . $options . ", ";
+            }
+
+            $total = GFCommon::get_order_total($form, $entry);
+        }
+
+        if(!empty($purpose))
+            $purpose = substr($purpose, 0, strlen($purpose)-2);
+
+        $purpose = urlencode($purpose);
+
+        //truncating to maximum length allowed by PayPal
+        if(strlen($purpose) > 127)
+            $purpose = substr($purpose, 0, 124) . "...";
+
+        $fields = "&amount={$total}&item_name={$purpose}&cmd=_donations";
+
+        return $total;
+    }
+
 
     private static function get_subscription_query_string($config, $form, $entry){
 

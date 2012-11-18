@@ -15,6 +15,8 @@ require_once("payread_post_api.php");
  * Should always print "TRUE" if it works.
  */
 
+die("TRUE");
+
 $postAPI=new payread_post_api();
 
 if($postAPI->is_valid_ip()){//Checks if the IP address comes from Payer else return false!

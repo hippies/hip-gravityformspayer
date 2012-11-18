@@ -16,6 +16,8 @@ require_once("../../../wp-load.php");
  * Should always print "TRUE" if it works.
  */	
 	
+
+die ("TRUE");
 $postAPI=new payread_post_api();
 
 wp_mail('christian@bolstad.se','betalning',print_r($_GET,1));
