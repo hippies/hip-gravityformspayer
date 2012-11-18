@@ -1812,16 +1812,27 @@ if (!class_exists('payread_post_api')) require_once("payread_post_api.php"); //L
 
     $thePayreadApi = new payread_post_api; //Creates an object from Payers API.
 
-   $orderId = intval($_GET['orderid']);
+   $orderId = intval($entry['id']) + 8000;
 
-die;
+
+    $url .= "?notify_url={$ipn_url}&charset=UTF-8&currency_code={$currency}&business={$business_email}&custom={$custom_field}{$invoice}{$customer_fields}{$page_style}{$continue_text}{$cancel_url}{$disable_note}{$disable_shipping}{$return_url}";
+
 
     $Auth_url = plugins_url(basename(dirname(__FILE__))) ."/auth.php?myOrderId=".$order_id;
     $Settle_url = plugins_url(basename(dirname(__FILE__))). "/settle.php?myOrderId=".$order_id;
     $Shop_url = get_permalink(get_option('woocommerce_view_order_page_id'));
-    $Success_url = add_query_arg('key', $order->order_key, add_query_arg('order', $order_id, get_permalink(get_option('woocommerce_thanks_page_id'))));
+
+    echo "<h1>Meh</h1>";
 
 
+    $Success_url = self::return_url($form["id"], $entry["id"]) . "&rm=2"; 
+
+
+    echo "<br>";
+    echo "Success_url $Success_url<br>";
+
+
+    die;
 
 #   'callbackurl' => home_url(),
 #               // Accept URL only works without problem if you check the box "Skip step 3 Payment approved" under ->Integration ->FlexWin in your DIBS account.
@@ -1871,7 +1882,6 @@ die;
 
     //Determines the currency, ie. SEK, EUR, GBR, USD, NOK, CAD (Canadian Dollar) or DKK.
     $thePayreadApi->set_currency('SEK');
-
 
 
     //Setting test mode
