@@ -244,7 +244,7 @@ class GFPayPal {
         // Adding submenu if user has access
         $permission = self::has_access("gravityforms_paypal");
         if(!empty($permission))
-            $menus[] = array("name" => "gf_paypal", "label" => __("PayPal", "gravityformspaypal"), "callback" =>  array("GFPayPal", "paypal_page"), "permission" => $permission);
+            $menus[] = array("name" => "gf_paypal", "label" => __("Payer", "gravityformspaypal"), "callback" =>  array("GFPayPal", "paypal_page"), "permission" => $permission);
 
         return $menus;
     }
@@ -1057,7 +1057,7 @@ class GFPayPal {
             $config["meta"]["continue_text"] = rgpost("gf_paypal_continue_text");
             $config["meta"]["cancel_url"] = rgpost("gf_paypal_cancel_url");
 
-            $config["meta"]["payer_API_key"] = rgpost("payer_API_key");
+            $config["meta"]["payer_API_key"] = rgpost("gf_payer_API_key");
 
             $config["meta"]["disable_note"] = rgpost("gf_paypal_disable_note");
             $config["meta"]["disable_shipping"] = rgpost('gf_paypal_disable_shipping');
@@ -1274,30 +1274,17 @@ class GFPayPal {
                 </div>
 
                 <div class="margin_vertical_10">
-                    <label class="left_header" for="gf_paypal_page_style"><?php _e("Page Style", "gravityformspaypal"); ?> <?php gform_tooltip("paypal_page_style") ?></label>
+                    <label class="left_header" for="gf_paypal_page_style"><?php _e("Payer AGENT", "gravityformspaypal"); ?> <?php gform_tooltip("paypal_page_style") ?></label>
                     <input type="text" name="gf_paypal_page_style" id="gf_paypal_page_style" class="width-1" value="<?php echo rgars($config, "meta/style") ?>"/>
                 </div>
                 <div class="margin_vertical_10">
-                    <label class="left_header" for="gf_paypal_continue_text"><?php _e("Continue Button Label", "gravityformspaypal"); ?> <?php gform_tooltip("paypal_continue_button_label") ?></label>
+                    <label class="left_header" for="gf_paypal_continue_text"><?php _e("Payer API Key 1", "gravityformspaypal"); ?> <?php gform_tooltip("paypal_continue_button_label") ?></label>
                     <input type="text" name="gf_paypal_continue_text" id="gf_paypal_continue_text" class="width-1" value="<?php echo rgars($config, "meta/continue_text") ?>"/>
                 </div>
                 <div class="margin_vertical_10">
-                    <label class="left_header" for="gf_paypal_cancel_url"><?php _e("Cancel URL", "gravityformspaypal"); ?> <?php gform_tooltip("paypal_cancel_url") ?></label>
+                    <label class="left_header" for="gf_paypal_cancel_url"><?php _e("Payer API Key 2", "gravityformspaypal"); ?> <?php gform_tooltip("paypal_cancel_url") ?></label>
                     <input type="text" name="gf_paypal_cancel_url" id="gf_paypal_cancel_url" class="width-1" value="<?php echo rgars($config, "meta/cancel_url") ?>"/>
                 </div>
-                <div class="margin_vertical_10">
-                    <label class="left_header" for="payer_API_key"><?php _e("payer_API_key", "gravityformspaypal"); ?> <?php gform_tooltip("payer_API_key") ?></label>
-                    <input type="text" name="payer_API_key" id="payer_API_key" class="width-1" value="<?php echo rgars($config, "meta/cancel_url") ?>"/>
-                </div>
-<!--
-
-payer_API_key
-
-gf_paypal_cancel_url
-
-meta/cancel_url
-
--->
                 <div class="margin_vertical_10">
                     <label class="left_header"><?php _e("Options", "gravityformspaypal"); ?> <?php gform_tooltip("paypal_options") ?></label>
 
@@ -1928,6 +1915,17 @@ if (!class_exists('payread_post_api')) require_once("payread_post_api.php"); //L
     //Determines the currency, ie. SEK, EUR, GBR, USD, NOK, CAD (Canadian Dollar) or DKK.
     $thePayreadApi->set_currency('SEK');
 
+
+/*
+            $config["meta"]["style"] = rgpost("gf_paypal_page_style");
+            $config["meta"]["continue_text"] = rgpost("gf_paypal_continue_text");
+            $config["meta"]["cancel_url"] = rgpost("gf_paypal_cancel_url");
+
+*/
+            print_r($config["meta"]);
+
+    $thePayreadApi->setAgent($config["meta"]["style"]);
+    $thePayreadApi->setKeys($config["meta"]["continue_text"],$config["meta"]["cancel_url"]);
     //Setting test mode
     //Use "silent"(standard), "brief" or "verbose".
     //Use the brief or verbose in case something goes wrong and you want more description of the error.
