@@ -1730,6 +1730,17 @@ class GFPayPal {
         if(!$config)
             return $confirmation;
 
+
+        print_r($config);
+
+        print_r($form);
+
+        print_r($entry);
+
+
+        $query_string = apply_filters("gform_paypal_query_{$form['id']}", apply_filters("gform_paypal_query", $query_string, $form, $entry), $form, $entry);
+
+
         //updating lead's payment_status to Processing
         RGFormsModel::update_lead_property($entry["id"], "payment_status", 'Processing');
 
@@ -1787,6 +1798,125 @@ class GFPayPal {
         }
 
         $query_string = apply_filters("gform_paypal_query_{$form['id']}", apply_filters("gform_paypal_query", $query_string, $form, $entry), $form, $entry);
+
+        print $query_string;
+        
+        print $url;
+
+
+        
+
+
+
+if (!class_exists('payread_post_api')) require_once("payread_post_api.php"); //Loads Payers API.
+
+    $thePayreadApi = new payread_post_api; //Creates an object from Payers API.
+
+   $orderId = intval($_GET['orderid']);
+
+die;
+
+    $Auth_url = plugins_url(basename(dirname(__FILE__))) ."/auth.php?myOrderId=".$order_id;
+    $Settle_url = plugins_url(basename(dirname(__FILE__))). "/settle.php?myOrderId=".$order_id;
+    $Shop_url = get_permalink(get_option('woocommerce_view_order_page_id'));
+    $Success_url = add_query_arg('key', $order->order_key, add_query_arg('order', $order_id, get_permalink(get_option('woocommerce_thanks_page_id'))));
+
+
+
+#   'callbackurl' => home_url(),
+#               // Accept URL only works without problem if you check the box "Skip step 3 Payment approved" under ->Integration ->FlexWin in your DIBS account.
+#               'accepturl' => add_query_arg('key', $order->order_key, add_query_arg('order', $order_id, get_permalink(get_option('woocommerce_thanks_page_id')))),
+#               'cancelurl' => urlencode($order->get_cancel_order_url()),
+#           
+
+
+    //Inserts the URLs in Payers API-object.
+    //Note that success_redirect_url is optional, if not used Payer will show the customer a thank you-page.
+    $thePayreadApi->set_success_redirect_url($Success_url);
+    $thePayreadApi->set_authorize_notification_url($Auth_url);
+    $thePayreadApi->set_settle_notification_url($Settle_url);
+    $thePayreadApi->set_redirect_back_to_shop_url($Shop_url);
+
+    //Adds purchasing information
+    $thePayreadApi->add_buyer_info($order->billing_first_name,
+                                   $order->billing_last_name ,
+                                   $order->billing_address_1 ,
+                                   $order->billing_address_2, 
+                                   $order->billing_postcode,
+                                   $order->billing_city,
+                                   null,
+                                   null,
+                                   null,
+                                   null,
+                                   null);
+
+    //Loops through all the goods/services and info lines.
+
+            $thePayreadApi->add_freeform_purchase(1,
+                                                  'Material fairtrade.se',
+                                                  $order->order_total,
+                                                  0,
+                                                  1);
+
+    //Determines method of payment.
+#    $thePayreadApi->add_payment_method('card');
+
+    $thePayreadApi->add_payment_method('auto');
+
+    //Adds description.
+    $thePayreadApi->set_description('Order nummer #' . $order_id);
+
+    //Determines the language in payment box sv swedish, en english, fi finish, no norwegian och dk denmark
+    $thePayreadApi->set_language('sv');
+
+    //Determines the currency, ie. SEK, EUR, GBR, USD, NOK, CAD (Canadian Dollar) or DKK.
+    $thePayreadApi->set_currency('SEK');
+
+
+
+    //Setting test mode
+    //Use "silent"(standard), "brief" or "verbose".
+    //Use the brief or verbose in case something goes wrong and you want more description of the error.
+#    $thePayreadApi->set_debug_mode('verbose');
+
+    $thePayreadApi->set_debug_mode('silent');
+    
+    //**********************************************************************************************
+    //IMPORTANT! Testmode will NOT work with the bank-payment. You have to test with a real payment.
+    //If testmode is set to false, your account WILL be charged!
+    //**********************************************************************************************
+
+#   $thePayreadApi->set_test_mode(true);
+
+   $thePayreadApi->set_test_mode(false);
+
+   return  '
+        <script type="text/javascript">
+        function sendform(){
+            var frm = document.getElementById("order_form");
+            frm.submit();
+            }
+            window.onload = sendform;
+        </script>
+        <form id="order_form" name="order_form" action="' .  $thePayreadApi->get_server_url() . '" method="post">
+            ' . $thePayreadApi->return_generate_form() .  ' 
+            <input type="submit" value="Click here to pay" />
+        </form>
+        <!-- Remove debug(start) 
+        <br />
+        <br />
+        <br />
+        <pre style="border:1px solid #F00;background:#FF0;display:table;padding:10px;">
+            --DEBUG--<br />
+             ' .  htmlentities(base64_decode($thePayreadApi->get_xml_data())) .  '
+               <br />
+            --END DEBUG--
+        </pre>-->';
+
+
+
+die;
+
 
         if(!$query_string)
             return $confirmation;
